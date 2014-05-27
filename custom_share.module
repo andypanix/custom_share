@@ -1,0 +1,82 @@
+<?php
+
+function custom_share_ds_fields_info($entity_type) {
+  $fields = array();
+  
+  $fields['social_share_button'] = array(
+   'title' => t('DS THEME: Social share button'),
+    'field_type' => DS_FIELD_TYPE_THEME,
+    'ui_limit' => array('*|*'),
+    'properties' => array(
+      // In case the field_type is DS_FIELD_TYPE_THEME, you also
+      // need to register these formatters as a theming function
+      // since the key will be called with theme('function').
+      // The value is the caption used in the selection config on Field UI.
+      'formatters' => array(
+        'social_share_button' => t('The social share in a dropdown button'),
+        // 'social_share_inline' => t('The social share printed inline'),
+      ),
+    )
+  );
+  
+  return array($entity_type => $fields);
+}
+
+/**
+ * Implements hook_theme().
+ */
+function custom_share_theme($existing, $type, $theme, $path) {
+  return array(
+    'social_share_button' => array(
+      'template' => 'templates/social-share-button',
+    ),
+  );
+}
+
+/**
+ * Implements of hook_preprocess_hook()
+ */
+function custom_share_preprocess_social_share_button(&$vars) {
+
+  // Add AddThis Javascript
+  drupal_add_js('//s7.addthis.com/js/300/addthis_widget.js#pubid=xa-51d1983c58c1f351', 'external');
+
+  $siteURL = 'http://' . $_SERVER['HTTP_HOST'];
+  
+  $data_share = '';
+  
+  $node_article = $vars['entity'];
+  $node_id = $node_article->nid;
+  $node_absolute_url = $siteURL . url('node/' . $node_id);
+  $node_title = $node_article->title;
+  $node_body = $node_article->body[LANGUAGE_NONE][0]['safe_value'];
+
+  // Here I'm using the function of the nice module advanced_text_formatter 
+  // https://drupal.org/project/advanced_text_formatter
+  // to trim down the body for share description
+  $trimmed_node_description = advanced_text_formatter_trim_text($node_body, array('html' => TRUE, 'max_length' => 200, 'word_boundary' => TRUE, 'ellipsis' => TRUE));
+
+  // For addThis API documentation see
+  // http://support.addthis.com/customer/portal/articles/1337989-overview
+  $additional_parameters  = 'addthis:url="' . $node_absolute_url . '" ';
+  $additional_parameters .= 'addthis:title="' . $node_title . '" ';
+  $additional_parameters .= 'addthis:description="' . drupal_html_to_text($trimmed_node_description) . '"';
+
+  // Add facebook like
+  $data_share .= '<a class="addthis_button_facebook_like" fb:like:layout="button_count" ' . $additional_parameters . '></a>';
+  // Add facebook send
+  $data_share .= '<a class="addthis_button_facebook_send" ' . $additional_parameters . '></a>';
+  // Addthis google+ button
+  $data_share .= '<a class="addthis_button_google_plusone" g:plusone:size="medium" ' . $additional_parameters . '></a>';
+  // Add tweet button
+  $data_share .= '<a class="addthis_button_tweet" ' . $additional_parameters . '></a>';
+
+  // Add to the DOM the object with sharing infos for each node
+  drupal_add_js(array ('socialShare' => array( 'share-' . $node_id => $data_share ) ), 'setting');
+  
+  // Add the javascript for button interaction
+  drupal_add_js(base_path() . drupal_get_path('module', 'custom_share') . '/share.js', 'external');
+  // Add basic CSS styles
+  drupal_add_css(base_path() . drupal_get_path('module', 'custom_share') . '/share.css', 'external');
+
+}
