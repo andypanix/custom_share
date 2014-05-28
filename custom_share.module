@@ -1,5 +1,7 @@
 <?php
-
+/*
+ * Implements hook_ds_fields_info()
+ */
 function custom_share_ds_fields_info($entity_type) {
   $fields = array();
   
@@ -75,8 +77,8 @@ function custom_share_preprocess_social_share_button(&$vars) {
   drupal_add_js(array ('socialShare' => array( 'share-' . $node_id => $data_share ) ), 'setting');
   
   // Add the javascript for button interaction
-  drupal_add_js(base_path() . drupal_get_path('module', 'custom_share') . '/share.js', 'external');
+  drupal_add_js(base_path() . drupal_get_path('module', 'custom_share') . '/share.js', 'file');
   // Add basic CSS styles
-  drupal_add_css(base_path() . drupal_get_path('module', 'custom_share') . '/share.css', 'external');
+  drupal_add_css(base_path() . drupal_get_path('module', 'custom_share') . '/share.css', 'file');
 
 }
